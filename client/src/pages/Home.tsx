@@ -24,7 +24,6 @@ const MARK = "/manus-storage/calc-lab-mark_6d9acf53.png";
 const PAPER = "/manus-storage/lab-paper-texture_d60cfd69.png";
 const WAVEFORM = "/manus-storage/waveform-sticker_041c2686.png";
 const BRUH_AUDIO = "/manus-storage/calc-bruh_212688b9.wav";
-const BASS_DROP_AUDIO = "/manus-storage/calc-bass-drop_2cd639d5.wav";
 
 type AngleMode = "DEG" | "RAD";
 type HistoryItem = { expression: string; result: string; stamp: string };
@@ -121,18 +120,12 @@ export default function Home() {
   const [dark, setDark] = useState(false);
   const [justCalculated, setJustCalculated] = useState(false);
   const bruhRef = useRef<HTMLAudioElement | null>(null);
-  const bassRef = useRef<HTMLAudioElement | null>(null);
 
   const playEqualsCue = useCallback(() => {
     const bruh = bruhRef.current;
-    const bass = bassRef.current;
-    if (!bruh || !bass) return;
+    if (!bruh) return;
     bruh.currentTime = 0;
-    bass.currentTime = 0;
     void bruh.play().catch(() => undefined);
-    window.setTimeout(() => {
-      if (bassRef.current) void bassRef.current.play().catch(() => undefined);
-    }, 55);
   }, []);
 
   const displayExpression = expression || "0";
@@ -206,11 +199,10 @@ export default function Home() {
   return (
     <main className={dark ? "app-shell dark-shell" : "app-shell"} style={{ backgroundImage: `url(${PAPER})` }}>
       <audio ref={bruhRef} src={BRUH_AUDIO} preload="auto" aria-hidden="true" />
-      <audio ref={bassRef} src={BASS_DROP_AUDIO} preload="auto" aria-hidden="true" />
       <header className="topbar">
         <div className="brand-lockup">
           <img className="brand-mark" src={MARK} alt="Calc Lab mark" />
-          <div><div className="brand-name">CALC<span>//</span>LAB</div><div className="brand-kicker">scientific, but make it yours</div></div>
+          <div><div className="brand-name">KRISHOTATOR</div><div className="brand-kicker">scientific, but make it yours</div></div>
         </div>
         <div className="top-actions">
           <span className="status-pill"><span className="status-dot" /> local mode</span>
@@ -251,7 +243,7 @@ export default function Home() {
           <div className="rail-footer"><AudioLines size={18} /><span>Equals is audio-ready.<br /><b>Tell us the vibe later.</b></span><ArrowRight size={16} /></div>
         </aside>
       </section>
-      <footer className="app-footer"><span>CALC//LAB v1.0</span><span>built for curious brains · no cloud, no fuss</span><span><ArrowLeft size={12} /> swipe the rail on mobile</span></footer>
+      <footer className="app-footer"><span>KRISHOTATOR v1.0</span><span>built for curious brains · no cloud, no fuss</span><span><ArrowLeft size={12} /> swipe the rail on mobile</span></footer>
     </main>
   );
 }

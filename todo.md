@@ -1,6 +1,8 @@
-# CALC//LAB Audio Update
+# KRISHOTATOR Audio and Brand Update
 
 - [x] Generate a short, clean “bruh” vocal hit suitable for a calculator interaction.
 - [x] Generate a subtle low-volume bass drop with a short tail.
-- [x] Integrate both sounds into the equals interaction with browser-safe playback handling.
-- [ ] Verify the audio hook does not block calculation, create excessive volume, or break production build.
+- [x] Remove the bass layer and keep only the short “bruh” clip through its natural end.
+- [x] Rename CALC//LAB to KRISHOTATOR across UI copy and document metadata.
+- [x] Preserve browser-safe playback handling for the shortened cue.
+- [x] Verify the shortened audio hook does not block calculation or break production build.

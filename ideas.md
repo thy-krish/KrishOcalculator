@@ -60,7 +60,7 @@ Headlines should be short, observant, and a little cheeky. CTAs should name the 
 - Example microcopy: “Degrees on. Your trig is feeling seen.”
 
 ### Wordmark & Logo
-A compact “CALC//LAB” wordmark set in Space Grotesk with the slash treated as a cobalt divider. The mark is a bold chartreuse square containing a black four-point “spark” made from calculator operators (+, −, ×, ÷) abstracted into a single symbol; it should work as a favicon without text.
+A compact “KRISHOTATOR” wordmark set in Space Grotesk with the slash treated as a cobalt divider. The mark is a bold chartreuse square containing a black four-point “spark” made from calculator operators (+, −, ×, ÷) abstracted into a single symbol; it should work as a favicon without text.
 
 ### Signature Brand Color
 **Lab Lime — `#D7F84A`**. It is bright enough to own the interaction layer, warm enough to belong with paper and coral, and distinctive without relying on a neon cyberpunk look.
@@ -68,10 +68,10 @@ A compact “CALC//LAB” wordmark set in Space Grotesk with the slash treated a
 ### Style Decisions
 - Prefer warm paper, ink, chartreuse, cobalt, and coral over purple gradients or generic blue UI.
 - Keep the primary layout asymmetric and workbench-like.
-- Keep audio on equals as a future-ready hook with a visible, accessible affordance; do not invent final audio content before the user specifies it.
+- Keep the short “bruh” audio on equals as a visible, accessible affordance; avoid extra background beats or bass layers.
 
 ## Style Decisions
 
-- The CALC//LAB logo mark is presented as a Lab Lime square with a dark operator-spark silhouette so the signature color owns the first-glance brand moment.
+- The KRISHOTATOR logo mark is presented as a Lab Lime square with a dark operator-spark silhouette so the signature color owns the first-glance brand moment.
 - Lab Lime remains reserved for primary interaction and active math state; coral and cobalt stay annotation/support colors.
-- Future audio on equals should preserve the visible waveform cue without adding an invented voice or sound before the user specifies the final audio direction.
+- Equals plays only the short “bruh” cue through its natural end; the visible waveform remains as the audio affordance and no bass layer is played.
