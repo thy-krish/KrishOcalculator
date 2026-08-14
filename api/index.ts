@@ -1,0 +1,31 @@
+import { createServer } from "http";
+import express from "express";
+import { createRequestHandler } from "@vercel/node";
+
+import { registerStorageProxy } from "../server/_core/storageProxy.js";
+import { registerOAuthRoutes } from "../server/_core/oauth.js";
+import { createExpressMiddleware } from "@trpc/server/adapters/express";
+import { appRouter } from "../server/routers.js";
+import { createContext } from "../server/_core/context.js";
+import { serveStatic } from "../server/_core/vite.js";
+
+const app = express();
+const server = createServer(app);
+
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+registerStorageProxy(app);
+registerOAuthRoutes(app);
+
+app.use(
+  "/api/trpc",
+  createExpressMiddleware({
+    router: appRouter,
+    createContext,
+  })
+);
+
+serveStatic(app);
+
+export default createRequestHandler(app);
