@@ -4,6 +4,14 @@ export function selectActiveHistory(isAuthenticated: boolean, guest: HistoryItem
   return isAuthenticated ? account : guest;
 }
 
+export function shouldShowHistorySyncToast(isAuthenticated: boolean, hasHistoryData: boolean, alreadySynced: boolean): boolean {
+  return isAuthenticated && hasHistoryData && !alreadySynced;
+}
+
+export function getHistorySyncNotice(count: number): string {
+  return count === 0 ? "Your archive is ready for new math." : `${count} ${count === 1 ? "calculation is" : "calculations are"} synced.`;
+}
+
 export type ShareTarget = {
   share?: (data: { title: string; text: string }) => Promise<void>;
   clipboard: { writeText: (text: string) => Promise<void> };

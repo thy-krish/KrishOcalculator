@@ -2,11 +2,12 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import { trpc } from "@/lib/trpc";
-import { mergeAccountHistory, selectActiveHistory, shareCalculation, type HistoryItem } from "@/lib/history";
+import { getHistorySyncNotice, mergeAccountHistory, selectActiveHistory, shareCalculation, shouldShowHistorySyncToast, type HistoryItem } from "@/lib/history";
 import { useCallback, useEffect, useMemo, useRef, useState, type SetStateAction } from "react";
 import {
   ArrowLeft,
   ArrowRight,
+  Check,
   AudioLines,
   Bookmark,
   Calculator,
@@ -193,7 +194,8 @@ export default function Home() {
   }, [user?.openId]);
 
   useEffect(() => {
-    if (!isAuthenticated || !historyQuery.data || syncedRef.current) return;
+    if (!shouldShowHistorySyncToast(isAuthenticated, Boolean(historyQuery.data), syncedRef.current)) return;
+    if (!historyQuery.data) return;
     syncedRef.current = true;
     const remote = historyQuery.data.map((item) => ({ expression: item.expression, result: item.result, stamp: item.calculatedAt instanceof Date ? item.calculatedAt.toISOString() : String(item.calculatedAt) }));
     const merged = mergeAccountHistory(remote, guestHistory);
@@ -201,6 +203,8 @@ export default function Home() {
     const localOnly = guestHistory.filter((item) => !remoteKeys.has(`${item.expression}|${item.result}`));
     setAccountHistory(merged);
     localOnly.forEach((item) => { void historyAdd.mutateAsync({ expression: item.expression, result: item.result, calculatedAt: item.stamp }).catch(() => undefined); });
+    const syncedCount = merged.length;
+    toast.custom((toastId) => <div className="sync-toast" role="status"><span className="sync-toast-icon"><Check size={16} strokeWidth={3} /></span><span className="sync-toast-copy"><b>History synced</b><small>{getHistorySyncNotice(syncedCount)}</small></span><button type="button" className="sync-toast-close" aria-label="Dismiss history sync notification" onClick={() => toast.dismiss(toastId)}>×</button></div>, { duration: 4200 });
   }, [guestHistory, historyAdd, historyQuery.data, isAuthenticated]);
 
   useEffect(() => {

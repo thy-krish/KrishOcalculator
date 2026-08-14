@@ -24,3 +24,12 @@
 - [x] Separate guest-local history from account-synced history and restore guest history after logout.
 - [x] Add focused tests for first-login merge and logout restoration boundaries.
 - [x] Verify share fallback, settings actions, and responsive history states before checkpoint.
+
+- [x] Add a stylish toast confirming successful authenticated history synchronization after login.
+- [x] Verify the toast trigger and production build.
+
+- [x] Add focused coverage for the post-login history-sync toast trigger and expected copy.
+- [x] Re-run final tests and build after the toast trigger coverage is added.
+
+- [x] Extract and test the authenticated post-login sync-toast trigger condition itself.
+- [x] Re-run the full test suite and production build after direct trigger coverage.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mergeAccountHistory, selectActiveHistory, shareCalculation, type HistoryItem } from "./history";
+import { getHistorySyncNotice, mergeAccountHistory, selectActiveHistory, shareCalculation, shouldShowHistorySyncToast, type HistoryItem } from "./history";
 
 const guest: HistoryItem[] = [
   { expression: "2+2", result: "4", stamp: "2026-08-14T10:00:00.000Z" },
@@ -15,6 +15,20 @@ describe("history mode boundaries", () => {
     const account = [{ expression: "3+3", result: "6", stamp: "2026-08-14T11:00:00.000Z" }];
     expect(selectActiveHistory(true, guest, account)).toBe(account);
     expect(selectActiveHistory(false, guest, account)).toBe(guest);
+  });
+});
+
+describe("history sync toast", () => {
+  it("fires only after authenticated history data is ready and only once", () => {
+    expect(shouldShowHistorySyncToast(false, true, false)).toBe(false);
+    expect(shouldShowHistorySyncToast(true, false, false)).toBe(false);
+    expect(shouldShowHistorySyncToast(true, true, false)).toBe(true);
+    expect(shouldShowHistorySyncToast(true, true, true)).toBe(false);
+  });
+  it("uses the expected copy after an authenticated merge", () => {
+    expect(getHistorySyncNotice(0)).toBe("Your archive is ready for new math.");
+    expect(getHistorySyncNotice(1)).toBe("1 calculation is synced.");
+    expect(getHistorySyncNotice(3)).toBe("3 calculations are synced.");
   });
 });
 
