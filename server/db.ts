@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { CalculationHistory, InsertCalculationHistory, InsertUser, calculationHistory, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,20 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+export async function listCalculationHistory(userId: number, limit = 50): Promise<CalculationHistory[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(calculationHistory).where(eq(calculationHistory.userId, userId)).orderBy(desc(calculationHistory.calculatedAt)).limit(limit);
+}
+
+export async function insertCalculationHistory(entry: InsertCalculationHistory): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.insert(calculationHistory).values(entry);
+}
+
+export async function clearCalculationHistory(userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.delete(calculationHistory).where(eq(calculationHistory.userId, userId));
+}

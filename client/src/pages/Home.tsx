@@ -1,7 +1,9 @@
 /* Acid-Pop Lab: asymmetrical neo-editorial calculator workbench. Keep math rigorous, interactions snappy, and the equals audio affordance ready without inventing its final sound. */
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { mergeAccountHistory, selectActiveHistory, shareCalculation, type HistoryItem } from "@/lib/history";
+import { useCallback, useEffect, useMemo, useRef, useState, type SetStateAction } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -17,6 +19,8 @@ import {
   LogOut,
   Moon,
   RotateCcw,
+  Settings2,
+  Share2,
   Volume2,
   VolumeX,
   X,
@@ -32,8 +36,6 @@ const WAVEFORM = "/manus-storage/waveform-sticker_041c2686.png";
 const BRUH_AUDIO = "/manus-storage/calc-bruh_212688b9.wav";
 
 type AngleMode = "DEG" | "RAD";
-type HistoryItem = { expression: string; result: string; stamp: string };
-
 type HistoryGroup = { label: string; items: HistoryItem[] };
 
 function formatHistoryTime(stamp: string) {
@@ -131,7 +133,7 @@ export default function Home() {
   const [inverse, setInverse] = useState(false);
   const [memory, setMemory] = useState(0);
   const [ans, setAns] = useState(0);
-  const [history, setHistory] = useState<HistoryItem[]>(() => {
+  const [guestHistory, setGuestHistory] = useState<HistoryItem[]>(() => {
     try {
       const stored = window.localStorage.getItem("krishotator-history");
       return stored ? JSON.parse(stored) as HistoryItem[] : [];
@@ -139,10 +141,22 @@ export default function Home() {
       return [];
     }
   });
+  const [accountHistory, setAccountHistory] = useState<HistoryItem[]>([]);
+  const history = selectActiveHistory(isAuthenticated, guestHistory, accountHistory);
+  const setActiveHistory = useCallback((updater: SetStateAction<HistoryItem[]>) => {
+    if (isAuthenticated) setAccountHistory(updater);
+    else setGuestHistory(updater);
+  }, [isAuthenticated]);
   const [dark, setDark] = useState(false);
   const [soundMuted, setSoundMuted] = useState(() => window.localStorage.getItem("krishotator-sound-muted") === "true");
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [justCalculated, setJustCalculated] = useState(false);
+  const historyQuery = trpc.history.list.useQuery(undefined, { enabled: isAuthenticated, retry: false });
+  const historyAdd = trpc.history.add.useMutation();
+  const historyClear = trpc.history.clear.useMutation();
+  const syncedRef = useRef(false);
+  const accountOwnerRef = useRef<string | null>(null);
 
   const groupedHistory = useMemo<HistoryGroup[]>(() => {
     const groups = new Map<string, HistoryItem[]>();
@@ -167,8 +181,34 @@ export default function Home() {
   }, [soundMuted]);
 
   useEffect(() => {
-    window.localStorage.setItem("krishotator-history", JSON.stringify(history));
-  }, [history]);
+    window.localStorage.setItem("krishotator-history", JSON.stringify(guestHistory));
+  }, [guestHistory]);
+
+  useEffect(() => {
+    const nextOwner = user?.openId ?? null;
+    if (accountOwnerRef.current === nextOwner) return;
+    accountOwnerRef.current = nextOwner;
+    setAccountHistory([]);
+    syncedRef.current = false;
+  }, [user?.openId]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !historyQuery.data || syncedRef.current) return;
+    syncedRef.current = true;
+    const remote = historyQuery.data.map((item) => ({ expression: item.expression, result: item.result, stamp: item.calculatedAt instanceof Date ? item.calculatedAt.toISOString() : String(item.calculatedAt) }));
+    const merged = mergeAccountHistory(remote, guestHistory);
+    const remoteKeys = new Set(remote.map((item) => `${item.expression}|${item.result}`));
+    const localOnly = guestHistory.filter((item) => !remoteKeys.has(`${item.expression}|${item.result}`));
+    setAccountHistory(merged);
+    localOnly.forEach((item) => { void historyAdd.mutateAsync({ expression: item.expression, result: item.result, calculatedAt: item.stamp }).catch(() => undefined); });
+  }, [guestHistory, historyAdd, historyQuery.data, isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      syncedRef.current = false;
+      setAccountHistory([]);
+    }
+  }, [isAuthenticated]);
 
   const displayExpression = expression || "0";
   const displayResult = result === "0" ? "" : `= ${result}`;
@@ -187,7 +227,9 @@ export default function Home() {
       const formatted = formatResult(value);
       setResult(formatted);
       setAns(value);
-      setHistory((items) => [{ expression, result: formatted, stamp: new Date().toISOString() }, ...items].slice(0, 24));
+      const stamp = new Date().toISOString();
+      setActiveHistory((items) => [{ expression, result: formatted, stamp }, ...items].slice(0, 24));
+      if (isAuthenticated) void historyAdd.mutateAsync({ expression, result: formatted, calculatedAt: stamp }).catch(() => toast.error("Saved locally; sync will retry later"));
       setJustCalculated(true);
       // Audio-ready hook: connect the requested sound/narration here later.
       window.dispatchEvent(new CustomEvent("calc:equals", { detail: { expression, value } }));
@@ -195,7 +237,7 @@ export default function Home() {
       setResult(error instanceof Error ? error.message : "Try again");
       setJustCalculated(false);
     }
-  }, [angle, ans, expression, playEqualsCue]);
+  }, [angle, ans, expression, historyAdd, isAuthenticated, playEqualsCue, setActiveHistory]);
 
   const press = useCallback((label: string) => {
     if (label === "=") return calculate();
@@ -239,6 +281,21 @@ export default function Home() {
 
   const memoryLabel = useMemo(() => memory === 0 ? "empty" : formatResult(memory), [memory]);
 
+  const clearHistory = useCallback(() => {
+    setActiveHistory([]);
+    if (isAuthenticated) void historyClear.mutateAsync().catch(() => toast.error("Could not clear synced history"));
+  }, [historyClear, isAuthenticated, setActiveHistory]);
+
+  const shareHistoryItem = useCallback(async (item: HistoryItem) => {
+    try {
+      const outcome = await shareCalculation(navigator, item);
+      toast.success(outcome === "shared" ? "Share sheet opened" : "Calculation copied");
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      toast.error("Could not share this calculation");
+    }
+  }, []);
+
   return (
     <main className={dark ? "app-shell dark-shell" : "app-shell"} style={{ backgroundImage: `url(${PAPER})` }}>
       <audio ref={bruhRef} src={BRUH_AUDIO} preload="auto" aria-hidden="true" />
@@ -251,6 +308,7 @@ export default function Home() {
           <span className="status-pill"><span className="status-dot" /> {isAuthenticated ? "synced mode" : "guest mode"}</span>
           {isAuthenticated ? <button className="account-chip" type="button" onClick={() => void logout()} title="Sign out"><span>{user?.name ?? "signed in"}</span><LogOut size={14} /></button> : <button className="login-button" type="button" onClick={() => startLogin()}>SIGN IN WITH GOOGLE <ArrowRight size={14} /></button>}
           <button className={soundMuted ? "icon-button muted" : "icon-button"} type="button" aria-label={soundMuted ? "Unmute equals sound" : "Mute equals sound"} title={soundMuted ? "Unmute equals sound" : "Mute equals sound"} onClick={() => setSoundMuted((value) => !value)}>{soundMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}</button>
+          <button className="icon-button" type="button" aria-label="Open account settings" title="Account settings" onClick={() => setSettingsOpen(true)}><Settings2 size={18} /></button>
           <button className="icon-button" type="button" aria-label="Toggle theme" onClick={() => setDark((value) => !value)}>{dark ? <Sun size={18} /> : <Moon size={18} />}</button>
         </div>
       </header>
@@ -284,11 +342,12 @@ export default function Home() {
           <div className="rail-header"><div><span className="eyebrow">02 / lab notes</span><h1>Make the numbers behave.</h1></div><img className="rail-sticker" src={WAVEFORM} alt="" /></div>
           <div className="note-card coral-card"><div className="note-label">ANGLE MODE</div><p>{angle === "DEG" ? "Degrees on. Your trig is feeling seen." : "Radians on. Deep math mode unlocked."}</p><span className="scribble">↳ switch upstairs</span></div>
           <div className="note-card lime-card"><div className="note-label">MEMORY STACK</div><p className="memory-value">{memoryLabel}</p><div className="memory-actions"><button type="button" onClick={() => press("M+")}>M+</button><button type="button" onClick={() => press("M−")}>M−</button><button type="button" onClick={() => press("MR")}>MR</button><button type="button" onClick={() => press("MC")}>MC</button></div></div>
-          <div className="history-card"><div className="history-heading"><span><History size={16} /> LAST MOVES</span><button type="button" aria-label="Clear history" onClick={() => setHistory([])}><Trash2 size={15} /></button></div>{history.length === 0 ? <div className="empty-history"><Bookmark size={18} /><span>Your solved stuff lands here.</span></div> : <div className="history-list">{history.slice(0, 3).map((item, index) => <button type="button" className="history-item" key={`${item.expression}-${index}`} onClick={() => { setExpression(item.expression); setResult(item.result); }}><span>{item.expression}</span><b>{item.result}</b></button>)}</div>}<button type="button" className="history-trigger" onClick={() => setHistoryOpen(true)}>OPEN FULL HISTORY <span className="history-trigger-end"><span className="history-badge">{history.length}</span><ArrowRight size={15} /></span></button></div>
+          <div className="history-card"><div className="history-heading"><span><History size={16} /> LAST MOVES</span><button type="button" aria-label="Clear history" onClick={clearHistory}><Trash2 size={15} /></button></div>{history.length === 0 ? <div className="empty-history"><Bookmark size={18} /><span>Your solved stuff lands here.</span></div> : <div className="history-list">{history.slice(0, 3).map((item, index) => <button type="button" className="history-item" key={`${item.expression}-${index}`} onClick={() => { setExpression(item.expression); setResult(item.result); }}><span>{item.expression}</span><b>{item.result}</b></button>)}</div>}<button type="button" className="history-trigger" onClick={() => setHistoryOpen(true)}>OPEN FULL HISTORY <span className="history-trigger-end"><span className="history-badge">{history.length}</span><ArrowRight size={15} /></span></button></div>
           <div className="rail-footer"><AudioLines size={18} /><span>Equals is audio-ready.<br /><b>Tell us the vibe later.</b></span><ArrowRight size={16} /></div>
         </aside>
       </section>
-      {historyOpen && <><button className="history-scrim" aria-label="Close history" onClick={() => setHistoryOpen(false)} type="button" /><aside className="history-drawer" aria-label="Calculation history"><div className="drawer-top"><div><span className="eyebrow">03 / archive</span><h2>Previous calculations.</h2></div><button className="drawer-close" type="button" onClick={() => setHistoryOpen(false)} aria-label="Close history"><X size={19} /></button></div><p className="drawer-copy">Your recent math, kept close. Tap a line to bring it back to the display.</p>{history.length === 0 ? <div className="drawer-empty"><Bookmark size={22} /><span>No solved expressions yet.</span></div> : <div className="drawer-list">{groupedHistory.map((group) => <section className="history-group" key={group.label}><div className="history-group-label"><span>{group.label}</span><span>{group.items.length} {group.items.length === 1 ? "calculation" : "calculations"}</span></div>{group.items.map((item, index) => <button type="button" className="drawer-item" key={`${item.expression}-${item.stamp}-${index}`} onClick={() => { setExpression(item.expression); setResult(item.result); setHistoryOpen(false); }}><span className="drawer-index">{String(index + 1).padStart(2, "0")}</span><span className="drawer-equation"><b>{item.expression}</b><small>{formatHistoryTime(item.stamp)}</small></span><strong>{item.result}</strong></button>)}</section>)}</div>}<button type="button" className="drawer-clear" onClick={() => setHistory([])}><Trash2 size={15} /> clear archive</button></aside></>}
+      {historyOpen && <><button className="history-scrim" aria-label="Close history" onClick={() => setHistoryOpen(false)} type="button" /><aside className="history-drawer" aria-label="Calculation history"><div className="drawer-top"><div><span className="eyebrow">03 / archive</span><h2>Previous calculations.</h2></div><button className="drawer-close" type="button" onClick={() => setHistoryOpen(false)} aria-label="Close history"><X size={19} /></button></div><p className="drawer-copy">Your recent math, kept close. Tap a line to bring it back to the display.</p>{history.length === 0 ? <div className="drawer-empty"><Bookmark size={22} /><span>No solved expressions yet.</span></div> : <div className="drawer-list">{groupedHistory.map((group) => <section className="history-group" key={group.label}><div className="history-group-label"><span>{group.label}</span><span>{group.items.length} {group.items.length === 1 ? "calculation" : "calculations"}</span></div>{group.items.map((item, index) => <div className="drawer-item-row" key={`${item.expression}-${item.stamp}-${index}`}><button type="button" className="drawer-item" onClick={() => { setExpression(item.expression); setResult(item.result); setHistoryOpen(false); }}><span className="drawer-index">{String(index + 1).padStart(2, "0")}</span><span className="drawer-equation"><b>{item.expression}</b><small>{formatHistoryTime(item.stamp)}</small></span><strong>{item.result}</strong></button><button type="button" className="share-button" aria-label={`Share ${item.expression} result`} title="Share calculation" onClick={() => void shareHistoryItem(item)}><Share2 size={15} /></button></div>)}</section>)}</div>}<button type="button" className="drawer-clear" onClick={clearHistory}><Trash2 size={15} /> clear archive</button></aside></>}
+      {settingsOpen && <><button className="settings-scrim" aria-label="Close account settings" onClick={() => setSettingsOpen(false)} type="button" /><aside className="settings-panel" aria-label="Account settings"><div className="drawer-top"><div><span className="eyebrow">04 / settings</span><h2>Control room.</h2></div><button className="drawer-close" type="button" onClick={() => setSettingsOpen(false)} aria-label="Close account settings"><X size={19} /></button></div><p className="drawer-copy">Tune your sound and decide where your solved stuff lives.</p><div className="settings-profile"><div className="settings-avatar">{isAuthenticated ? (user?.name?.slice(0, 1).toUpperCase() ?? "K") : "G"}</div><div><b>{isAuthenticated ? (user?.name ?? "Signed in") : "Guest mode"}</b><small>{isAuthenticated ? "History sync is on" : "History stays on this device"}</small></div></div><div className="settings-row"><span><b>Equals sound</b><small>{soundMuted ? "Muted" : "Bruh cue enabled"}</small></span><button className={soundMuted ? "settings-switch is-off" : "settings-switch"} type="button" role="switch" aria-checked={!soundMuted} onClick={() => setSoundMuted((value) => !value)}><span /></button></div>{isAuthenticated ? <><div className="settings-row"><span><b>History sync</b><small>{historyQuery.isFetching ? "Syncing now…" : `${history.length} saved locally + online`}</small></span><button className="settings-action" type="button" onClick={() => void historyQuery.refetch()}>SYNC</button></div><button className="settings-logout" type="button" onClick={() => void logout()}><LogOut size={15} /> Log out</button></> : <button className="settings-login" type="button" onClick={() => startLogin()}>SIGN IN TO SYNC HISTORY <ArrowRight size={15} /></button>}</aside></>}
       <footer className="app-footer"><span>KRISHOTATOR v1.0</span><span>built for curious brains · no cloud, no fuss</span><span><ArrowLeft size={12} /> swipe the rail on mobile</span></footer>
     </main>
   );

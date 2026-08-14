@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { index, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -25,4 +25,15 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+export const calculationHistory = mysqlTable("calculation_history", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  expression: varchar("expression", { length: 512 }).notNull(),
+  result: varchar("result", { length: 256 }).notNull(),
+  calculatedAt: timestamp("calculatedAt").defaultNow().notNull(),
+}, (table) => ({
+  userDateIdx: index("calculation_history_user_date_idx").on(table.userId, table.calculatedAt),
+}));
+
+export type CalculationHistory = typeof calculationHistory.$inferSelect;
+export type InsertCalculationHistory = typeof calculationHistory.$inferInsert;

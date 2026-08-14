@@ -15,3 +15,12 @@
 - [x] Modernize the visual system without losing the tactile KRISHOTATOR identity.
 - [x] Add optional Google-labeled OAuth sign-in page using the supported secure OAuth flow while preserving guest access.
 - [x] Verify guest flow route, optional auth entry point render, responsive behavior, tests, and production build.
+- [x] Add authenticated calculation history schema and user-scoped database procedures.
+- [x] Keep guest history local while syncing logged-in history to the database.
+- [x] Add account settings panel for logout, sound preferences, and history sync.
+- [x] Add copy/native-share actions for individual history entries.
+- [x] Verify guest and authenticated flows, sharing behavior, responsive UI, tests, and production build.
+
+- [x] Separate guest-local history from account-synced history and restore guest history after logout.
+- [x] Add focused tests for first-login merge and logout restoration boundaries.
+- [x] Verify share fallback, settings actions, and responsive history states before checkpoint.
