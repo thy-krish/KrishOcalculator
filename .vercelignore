@@ -16,8 +16,6 @@ coverage/
 *.spec.ts
 vitest.config.ts
 drizzle/
-patches/
-*.patch
 template.json
 todo.md
 AI_HANDOFF.md
