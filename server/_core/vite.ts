@@ -7,6 +7,7 @@ import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
 
 export async function setupVite(app: Express, server: Server) {
+  console.log("Creating Vite server...");
   const serverOptions = {
     middlewareMode: true,
     hmr: { server },
@@ -19,6 +20,7 @@ export async function setupVite(app: Express, server: Server) {
     server: serverOptions,
     appType: "custom",
   });
+  console.log("Vite server created");
 
   app.use(vite.middlewares);
   app.use("*", async (req, res, next) => {
@@ -45,6 +47,7 @@ export async function setupVite(app: Express, server: Server) {
       next(e);
     }
   });
+  console.log("Vite middleware installed");
 }
 
 export function serveStatic(app: Express) {

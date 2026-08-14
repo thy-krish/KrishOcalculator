@@ -46,7 +46,14 @@ async function startServer() {
   );
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
-    await setupVite(app, server);
+    console.log("Setting up Vite...");
+    try {
+      await setupVite(app, server);
+      console.log("Vite setup complete");
+    } catch (e) {
+      console.error("Vite setup failed:", e);
+      serveStatic(app);
+    }
   } else {
     serveStatic(app);
   }
@@ -58,9 +65,23 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
-  server.listen(port, () => {
+  server.listen(port, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${port}/`);
+    console.log(`Server listening on port ${port}`);
   });
+  
+  server.on('error', (err) => {
+    console.error('Server error:', err);
+  });
+  
+  server.on('listening', () => {
+    console.log('Server listening event fired');
+    const address = server.address();
+    console.log('Server address:', address);
+  });
+
+// Prevent process from exiting
+  process.stdin.resume();
 }
 
 startServer().catch(console.error);

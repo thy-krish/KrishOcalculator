@@ -33,3 +33,6 @@
 
 - [x] Extract and test the authenticated post-login sync-toast trigger condition itself.
 - [x] Re-run the full test suite and production build after direct trigger coverage.
+
+- [ ] Create a secure AI handoff document with launch, maintenance, testing, auth, database, and secret-handling guidance.
+- [ ] Copy and verify the handoff document in D:\Projects\Kalculator.
