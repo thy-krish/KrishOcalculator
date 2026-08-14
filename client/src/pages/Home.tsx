@@ -1,5 +1,5 @@
 /* Acid-Pop Lab: asymmetrical neo-editorial calculator workbench. Keep math rigorous, interactions snappy, and the equals audio affordance ready without inventing its final sound. */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -23,6 +23,8 @@ import { toast } from "sonner";
 const MARK = "/manus-storage/calc-lab-mark_6d9acf53.png";
 const PAPER = "/manus-storage/lab-paper-texture_d60cfd69.png";
 const WAVEFORM = "/manus-storage/waveform-sticker_041c2686.png";
+const BRUH_AUDIO = "/manus-storage/calc-bruh_212688b9.wav";
+const BASS_DROP_AUDIO = "/manus-storage/calc-bass-drop_2cd639d5.wav";
 
 type AngleMode = "DEG" | "RAD";
 type HistoryItem = { expression: string; result: string; stamp: string };
@@ -118,6 +120,20 @@ export default function Home() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [dark, setDark] = useState(false);
   const [justCalculated, setJustCalculated] = useState(false);
+  const bruhRef = useRef<HTMLAudioElement | null>(null);
+  const bassRef = useRef<HTMLAudioElement | null>(null);
+
+  const playEqualsCue = useCallback(() => {
+    const bruh = bruhRef.current;
+    const bass = bassRef.current;
+    if (!bruh || !bass) return;
+    bruh.currentTime = 0;
+    bass.currentTime = 0;
+    void bruh.play().catch(() => undefined);
+    window.setTimeout(() => {
+      if (bassRef.current) void bassRef.current.play().catch(() => undefined);
+    }, 55);
+  }, []);
 
   const displayExpression = expression || "0";
   const displayResult = result === "0" ? "" : `= ${result}`;
@@ -130,6 +146,7 @@ export default function Home() {
 
   const calculate = useCallback(() => {
     if (!expression.trim()) return;
+    playEqualsCue();
     try {
       const value = evaluateExpression(expression, angle, ans);
       const formatted = formatResult(value);
@@ -143,7 +160,7 @@ export default function Home() {
       setResult(error instanceof Error ? error.message : "Try again");
       setJustCalculated(false);
     }
-  }, [angle, ans, expression]);
+  }, [angle, ans, expression, playEqualsCue]);
 
   const press = useCallback((label: string) => {
     if (label === "=") return calculate();
@@ -188,6 +205,8 @@ export default function Home() {
 
   return (
     <main className={dark ? "app-shell dark-shell" : "app-shell"} style={{ backgroundImage: `url(${PAPER})` }}>
+      <audio ref={bruhRef} src={BRUH_AUDIO} preload="auto" aria-hidden="true" />
+      <audio ref={bassRef} src={BASS_DROP_AUDIO} preload="auto" aria-hidden="true" />
       <header className="topbar">
         <div className="brand-lockup">
           <img className="brand-mark" src={MARK} alt="Calc Lab mark" />
