@@ -81,6 +81,7 @@ function evaluateExpression(input: string, angle: AngleMode, ans: number) {
     .replaceAll("÷", "/")
     .replaceAll("−", "-")
     .replaceAll("π", "PI")
+    .replaceAll("e", "E")
     .replaceAll("Ans", "ANS")
     .replaceAll("^", "**")
     .replace(/(\d|\))(?=\()/g, "$1*")
