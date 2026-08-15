@@ -1,6 +1,6 @@
 [build]
   command = "pnpm run build"
-  publish = "dist"
+  publish = "dist/public"
 
 [build.environment]
   PNPM_CONFIG_DANGEROUSLY_ALLOW_ALL_BUILDS = "true"
