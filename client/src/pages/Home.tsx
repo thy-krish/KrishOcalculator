@@ -34,7 +34,8 @@ import { toast } from "sonner";
 const MARK = "/manus-storage/calc-lab-mark_6d9acf53.png";
 const PAPER = "/manus-storage/lab-paper-texture_d60cfd69.png";
 const WAVEFORM = "/manus-storage/waveform-sticker_041c2686.png";
-const BRUH_AUDIO = "/manus-storage/calc-bruh_212688b9.wav";
+const BRUH_AUDIO = "/audio/Bruh sound effect.wav";
+const HELLO_AUDIO = "/audio/Hello There (Obi Wan) - Sound Effect (HD) [-Rn3j2XQt4s].wav";
 
 type AngleMode = "DEG" | "RAD";
 type HistoryGroup = { label: string; items: HistoryItem[] };
@@ -170,6 +171,17 @@ export default function Home() {
     return Array.from(groups, ([label, items]) => ({ label, items }));
   }, [history]);
   const bruhRef = useRef<HTMLAudioElement | null>(null);
+  const helloRef = useRef<HTMLAudioElement | null>(null);
+  const helloPlayedRef = useRef(false);
+
+  const playHelloCue = useCallback(() => {
+    if (helloPlayedRef.current) return;
+    const hello = helloRef.current;
+    if (!hello || soundMuted) return;
+    hello.currentTime = 0;
+    void hello.play().catch(() => undefined);
+    helloPlayedRef.current = true;
+  }, [soundMuted]);
 
   const playEqualsCue = useCallback(() => {
     const bruh = bruhRef.current;
@@ -214,6 +226,21 @@ export default function Home() {
       setAccountHistory([]);
     }
   }, [isAuthenticated]);
+
+  // Play "Hello There" on first user interaction
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      playHelloCue();
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
+    };
+    window.addEventListener('click', handleFirstInteraction);
+    window.addEventListener('keydown', handleFirstInteraction);
+    return () => {
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
+    };
+  }, [playHelloCue]);
 
   const displayExpression = expression || "0";
   const displayResult = result === "0" ? "" : `= ${result}`;
@@ -304,6 +331,7 @@ export default function Home() {
   return (
     <main className={dark ? "app-shell dark-shell" : "app-shell"} style={{ backgroundImage: `url(${PAPER})` }}>
       <audio ref={bruhRef} src={BRUH_AUDIO} preload="auto" aria-hidden="true" />
+      <audio ref={helloRef} src={HELLO_AUDIO} preload="auto" aria-hidden="true" />
       <header className="topbar">
         <div className="brand-lockup">
           <img className="brand-mark" src={MARK} alt="Calc Lab mark" />
