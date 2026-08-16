@@ -25,7 +25,7 @@ button { font: inherit; color: inherit; }
 button:focus-visible { outline: 3px solid var(--cobalt); outline-offset: 3px; }
 
 .app-shell { min-height: 100vh; padding: 26px clamp(18px, 4vw, 64px) 18px; background-color: var(--paper); background-size: 760px auto; transition: background-color .2s var(--ease-out), color .2s var(--ease-out); }
-.dark-shell { --paper: #171914; --paper-deep: #23251e; --ink: #f4f0e7; --ink-soft: #bfc4aa; --line: rgba(244, 240, 231, .16); --shadow: 0 22px 55px rgba(0, 0, 0, .3), 0 2px 0 rgba(215, 248, 74, .16); background-color: var(--paper); }
+.dark-shell { --paper: #171914; --paper-deep: #23251e; --ink: #f4f0e7; --ink-soft: #bfc4aa; --lime: #e8ff5a; --cobalt: #7aa2ff; --coral: #ff9d8a; --line: rgba(244, 240, 231, .16); --shadow: 0 22px 55px rgba(0, 0, 0, .3), 0 2px 0 rgba(215, 248, 74, .16); background-color: var(--paper); }
 .topbar, .workbench, .app-footer { max-width: 1420px; margin: 0 auto; }
 .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: clamp(26px, 5vw, 58px); }
 .brand-lockup { display: flex; align-items: center; gap: 12px; }
@@ -231,3 +231,29 @@ kbd { padding: 3px 6px; border: 1px solid var(--line); border-bottom-width: 2px;
 .sync-toast-close:hover { background: var(--ink); color: var(--lime); }
 @keyframes sync-toast-in { from { opacity: 0; transform: translateY(-10px) rotate(1deg); } to { opacity: 1; transform: translateY(0) rotate(0); } }
 @media (prefers-reduced-motion: reduce) { .sync-toast { animation: none; } }
+
+/* Dark mode visibility fixes */
+.dark-shell .coral-card .note-label,
+.dark-shell .coral-card .scribble { color: #ffd5cc; }
+.dark-shell .lime-card .note-label { color: #3d4400; }
+.dark-shell .note-card p { color: var(--ink); }
+.dark-shell .history-item span { color: var(--ink-soft); }
+.dark-shell .history-item b { color: var(--ink); }
+.dark-shell .memory-actions button { border-color: rgba(244,240,231,.28); background: rgba(244,240,231,.15); color: var(--ink); }
+.dark-shell .memory-actions button:hover { background: rgba(244,240,231,.35); }
+.dark-shell .empty-history { color: var(--ink-soft); }
+.dark-shell .drawer-copy { color: var(--ink-soft); }
+.dark-shell .drawer-equation b { color: var(--ink); }
+.dark-shell .drawer-equation small { color: var(--ink-soft); }
+.dark-shell .drawer-item strong { color: var(--ink); }
+.dark-shell .login-card p { color: var(--ink-soft); }
+.dark-shell .settings-profile { background: color-mix(in srgb, var(--paper) 82%, var(--lime)); }
+.dark-shell .settings-profile small { color: var(--ink-soft); }
+.dark-shell .settings-row span b { color: var(--ink); }
+.dark-shell .settings-row small { color: var(--ink-soft); }
+.dark-shell .sync-toast { background: var(--lime); color: var(--ink); }
+.dark-shell .sync-toast-icon { background: var(--cobalt); color: var(--lime); }
+.dark-shell .sync-toast-copy b { color: var(--ink); }
+.dark-shell .sync-toast-copy small { color: color-mix(in srgb, var(--ink) 72%, transparent); }
+.dark-shell .sync-toast-close { background: rgba(244,240,231,.1); color: var(--ink); }
+.dark-shell .sync-toast-close:hover { background: var(--ink); color: var(--lime); }

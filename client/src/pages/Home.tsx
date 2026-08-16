@@ -365,7 +365,7 @@ export default function Home() {
               const operatorKey = ["÷", "×", "−", "+", "%"].includes(label);
               const isEquals = label === "=";
               const shown = inverse && label === "sin" ? "sin⁻¹" : inverse && label === "sin⁻¹" ? "sin" : inverse && label === "cos" ? "cos⁻¹" : inverse && label === "cos⁻¹" ? "cos" : inverse && label === "tan" ? "tan⁻¹" : inverse && label === "tan⁻¹" ? "tan" : label;
-              return <button key={label} type="button" className={`calc-key ${functionKey ? "function-key" : ""} ${operatorKey ? "operator-key" : ""} ${isEquals ? "equals-key" : ""} ${label === "AC" || label === "⌫" ? "utility-key" : ""}`} onClick={() => press(shown)}>{isEquals ? <><span>=</span><img src={WAVEFORM} alt="" /></> : label === "⌫" ? <Delete size={20} /> : shown}</button>;
+              return <button key={label} type="button" className={`calc-key ${functionKey ? "function-key" : ""} ${operatorKey ? "operator-key" : ""} ${isEquals ? "equals-key" : ""} ${label === "AC" || label === "⌫" ? "utility-key" : ""}`} onClick={() => press(shown)}>{isEquals ? <><span>=</span><svg width="23" height="15" viewBox="0 0 23 15" fill="none" aria-hidden="true"><path d="M1 7.5c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5-2.9 6.5-6.5 6.5S1 11.1 1 7.5zm11.5-3v6M4 7.5h15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></> : label === "⌫" ? <Delete size={20} /> : shown}</button>;
             })}
           </div>
           <div className="shortcut-note"><Zap size={14} /> Tip: press <kbd>Enter</kbd> to solve, <kbd>M</kbd> to mute, <kbd>Esc</kbd> to reset</div>
