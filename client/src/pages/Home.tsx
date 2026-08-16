@@ -34,8 +34,8 @@ import { toast } from "sonner";
 const MARK = "/manus-storage/calc-lab-mark_6d9acf53.png";
 const PAPER = "/manus-storage/lab-paper-texture_d60cfd69.png";
 const WAVEFORM = "/manus-storage/waveform-sticker_041c2686.png";
-const BRUH_AUDIO = "/audio/Bruh sound effect.wav";
-const HELLO_AUDIO = "/audio/Hello There (Obi Wan) - Sound Effect (HD) [-Rn3j2XQt4s].wav";
+const BRUH_AUDIO = "/audio/bruh-sound.wav";
+const HELLO_AUDIO = "/audio/hello-there.wav";
 
 type AngleMode = "DEG" | "RAD";
 type HistoryGroup = { label: string; items: HistoryItem[] };
